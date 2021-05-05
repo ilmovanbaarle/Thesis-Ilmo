@@ -34,6 +34,7 @@ def small_model(numlanes=1,v0=50,nsamples=5):
     link5_vol = 0
     link10_vol = 0
     
+    # this is to change values in Visum
     Visum.Net.Links.ItemByKey(3,2).SetAttValue("V0PRT",v0)
     Visum.Net.Links.ItemByKey(5,8).SetAttValue("V0PRT",v0)
     Visum.Net.Links.ItemByKey(3,2).SetAttValue("NUMLANES",numlanes)
@@ -41,7 +42,8 @@ def small_model(numlanes=1,v0=50,nsamples=5):
     
     for i in range(nsamples):
         Visum.Procedures.Execute()
-
+        
+        # this is to retrieve values from Visum
         link2_vol += Visum.Net.Links.ItemByKey(3,2).AttValue("VOLVEHPRT(AP)")
         link3_vol = Visum.Net.Links.ItemByKey(2,5).AttValue("VOLVEHPRT(AP)")
         link5_vol = Visum.Net.Links.ItemByKey(5,8).AttValue("VOLVEHPRT(AP)")
@@ -57,6 +59,7 @@ def small_model(numlanes=1,v0=50,nsamples=5):
 
 # In[7]:
 
+# Scenario_instellingen are 1 on 1 taken from Visum. This is how the settings for a run are determined.
 
 def scenario_instellingen(KMKOSTEN=0.7,OVKOSTEN=1.028,EBIKE_BS=0.28,EBIKE_OW=0.11,THUISW=0.95):
 
@@ -102,9 +105,11 @@ def bigmodel(KMKOSTEN,OVKOSTEN,EBIKE_BS,EBIKE_OW,THUISW,nsamples=1):
     scenario_instellingen(KMKOSTEN,OVKOSTEN,EBIKE_BS,EBIKE_OW,THUISW)
    
     for i in range(nsamples):
-        Visum.Procedures.Execute()
         
-    TAB_GroVem_2040H_Iter1.csv
+        # in order to run te model
+        Visum.Procedures.Execute()
+    
+    # for the big run data is gained from excel files
     df1 = pd.read_csv('20201221 Mobilitievisie Groningen - complete/TAB_GroVem_2040H_Iter1.csv')
     df2 = pd.read_csv('20201221 Mobilitievisie Groningen - complete/TAB_all_GroVem_2040H_Iter1.csv')
     df3 = pd.read_csv('20201221 Mobilitievisie Groningen - complete/TAB_km_GroVem_2040H_Iter1.csv', header =None)
