@@ -40,7 +40,7 @@ def small_model(numlanes=1,v0=50,nsamples=5):
     Visum.Net.Links.ItemByKey(5,8).SetAttValue("NUMLANES",numlanes)
     
     for i in range(nsamples):
-        myvisum.Procedures.Execute()
+        Visum.Procedures.Execute()
 
         link2_vol += Visum.Net.Links.ItemByKey(3,2).AttValue("VOLVEHPRT(AP)")
         link3_vol = Visum.Net.Links.ItemByKey(2,5).AttValue("VOLVEHPRT(AP)")
