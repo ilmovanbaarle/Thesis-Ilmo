@@ -61,11 +61,31 @@ class VisumModel(SingleReplication, FileModel):
 
 
 if __name__ == '__main__':
+    from ema_workbench import (RealParameter, IntegerParameter, ScalarOutcome, Constant,
+                           Model, Policy)
     ema_logging.log_to_stderr(level=ema_logging.DEBUG)
 
-    model = VisumModel('testmodel', wd='', model_file='', output_file='',
-                       n_replications=1)
-    model.uncertaintes = []
-    model.outcomes = []
+    model = VisumModel('testmodel', wd=wd, model_file='Version for Thesis good.ver', output_file='TAB_GroVem_2040H_Iter1.csv',
+                           n_replications=1)
+    model.uncertainties = [RealParameter('EBIKE_BASIS', 0.2, 0.5),
+                          RealParameter('EBIKE_OW', 0.08, 0.25),
+                          RealParameter('THUISWERKREDUCTIE', 0.8, 0.99),
+                          RealParameter('KMKOSTENINDEX', 0.5 ,0.9),
+                          RealParameter('OVKOSTENINDEX', 0.9, 1.1)]
 
-    results = perform_experiments(scenarios=10)
+    model.outcomes = [ScalarOutcome('car_share'),
+                      ScalarOutcome('OV_share'),
+                      ScalarOutcome('total_km')]
+
+    policies = [Policy('basecase',
+                      model_file = 'Version for Thesis good.ver'),
+                    Policy('fiets',
+                           model_file='Policy fiets.ver'),
+                    Policy('30 km',
+                           model_file='Policy 30 km.ver'),
+                    Policy('knips hoog',
+                           model_file='Policy knips hoog.ver')
+                    ]
+
+
+    results = perform_experiments(scenarios=1, models = model, policies = policies)
