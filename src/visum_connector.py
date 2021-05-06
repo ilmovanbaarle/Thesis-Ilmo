@@ -89,3 +89,40 @@ if __name__ == '__main__':
 
 
     results = perform_experiments(scenarios=1, models = model, policies = policies)
+    
+    
+    ##########
+    
+[MainProcess/DEBUG] setting working directory to C:\Users\nlilbm\Documents\Thesis\20201221 Mobilitievisie Groningen - complete
+[MainProcess/INFO] performing 1 scenarios * 4 policies * 1 model(s) = 4 experiments
+[MainProcess/INFO] performing experiments sequentially
+[MainProcess/DEBUG] running scenario 16 for policy basecase on model testmodel
+[MainProcess/DEBUG] calling run_model on SingleReplication
+[MainProcess/DEBUG] calling run_model on AbstractModel
+[MainProcess/DEBUG] calling initialized on AbstractModel
+[MainProcess/DEBUG] completed calling initialized on AbstractModel
+[MainProcess/DEBUG] calling model_init on VisumModel
+[MainProcess/DEBUG] calling model_init on AbstractModel
+[MainProcess/DEBUG] completed calling model_init on AbstractModel
+[MainProcess/DEBUG] completed calling model_init on VisumModel
+[MainProcess/DEBUG] calling _transform on AbstractModel
+[MainProcess/DEBUG] completed calling _transform on AbstractModel
+[MainProcess/DEBUG] calling _transform on AbstractModel
+[MainProcess/DEBUG] completed calling _transform on AbstractModel
+[MainProcess/DEBUG] completed calling run_model on AbstractModel
+[MainProcess/DEBUG] calling run_experiment on VisumModel
+[MainProcess/ERROR] name 'Visum' is not defined
+Traceback (most recent call last):
+  File "C:\Users\nlilbm\Anaconda3\lib\site-packages\ema_workbench\em_framework\experiment_runner.py", line 85, in run_experiment
+    model.run_model(scenario, policy)
+  File "C:\Users\nlilbm\Anaconda3\lib\site-packages\ema_workbench\util\ema_logging.py", line 158, in wrapper
+    res = func(*args, **kwargs)
+  File "C:\Users\nlilbm\Anaconda3\lib\site-packages\ema_workbench\em_framework\model.py", line 338, in run_model
+    outputs = self.run_experiment(experiment)
+  File "C:\Users\nlilbm\Anaconda3\lib\site-packages\ema_workbench\util\ema_logging.py", line 158, in wrapper
+    res = func(*args, **kwargs)
+  File "<ipython-input-40-1a98a2fcc369>", line 56, in run_experiment
+    Visum.Net.SetAttValue(k, v)
+NameError: name 'Visum' is not defined
+[MainProcess/DEBUG] calling cleanup on AbstractModel
+[MainProcess/DEBUG] completed calling cleanup on AbstractModel
