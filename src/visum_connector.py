@@ -1,14 +1,18 @@
 wd = "C:/Users/nlilbm/Documents/Thesis/20201221 Mobilitievisie Groningen - complete/"
 
 def output_changer(df):
-    xls = pd.ExcelFile(df)
-    df1 = pd.read_excel(xls, 'SYNT_VERPL', index_col = 0, header = None, skiprows = 0,
-                    nrows = 1000, usecols = 'B:H')
-    
-    carshare_gemeente = df1.loc["TOTAAL"].iloc[1,0]/df1.loc["TOTAAL"].iloc[1,-1]
-    bikeshare_gemeente = df1.loc["TOTAAL"].iloc[1,3]/df1.loc["TOTAAL"].iloc[1,-1]
-    OVshare_gemeente = df1.loc["TOTAAL"].iloc[1,2]/df1.loc["TOTAAL"].iloc[1,-1]
-    totaal_gemeente = df1.loc["TOTAAL"].iloc[1,-1]
+
+    df1 = pd.read_csv(df)
+    only_gemeente = df1[(df1.O == 1) | (df1.D == 1)]
+
+    car_km = only_gemeente[only_gemeente.VVW == 'AB'].Value.sum()
+    OV_km = only_gemeente[only_gemeente.VVW == 'OV'].Value.sum()
+    fiets_km = only_gemeente[only_gemeente.VVW == 'FTS'].Value.sum()
+    totaal_gemeente = only_gemeente.Value.sum()
+
+    carshare_gemeente = car_km/totaal_gemeente
+    OVshare_gemeente = OV_km/totaal_gemeente
+    bikeshare_gemeente = fiets_km/totaal_gemeente
     
     output = {"carshare_gemeente":carshare_gemeente, "bikeshare_gemeente":bikeshare_gemeente,
              "OVshare_gemeente":OVshare_gemeente,"totaal_gemeente":totaal_gemeente}
@@ -71,6 +75,7 @@ class VisumModel(SingleReplication, FileModel):
     def run_experiment(self, experiment):
 
         for k, v in experiment.items():
+            print(k,v)
             self.Visum.Net.SetAttValue(k, v)
 
         # run experiment
@@ -83,30 +88,25 @@ class VisumModel(SingleReplication, FileModel):
 
         results = {}
         for variable in self.output_variables:
-
-            # assumption is that outcomes are stored by column
-            # not sure if this is correct
-            if variable in results:
-                tmp = results[variable]
-                tmp.append(output[variable])
-                results[variable] = tmp
-            if variable not in results:
-                results[variable] = [output[variable]]
+            
+            results[variable] = output[variable]
 
         return results
 
 
 if __name__ == '__main__':
     from ema_workbench import (RealParameter, IntegerParameter, ScalarOutcome, Constant,
-                           Model, Policy, MultiprocessingEvaluator)
+                           Model, Policy, MultiprocessingEvaluator, ArrayOutcome)
     ema_logging.log_to_stderr(level=ema_logging.DEBUG)
 
     model = VisumModel('testmodel', wd=wd, model_file='Version for Thesis good.ver', output_file='TAB_GroVem_2040H_Iter1.csv',
                            n_replications=1)
-    model.uncertainties = [RealParameter('EBIKE_BASIS', 0.2, 0.5),
-                          RealParameter('EBIKE_OW', 0.08, 0.25),
-                          RealParameter('THUISWERKREDUCTIE', 0.8, 0.99),
-                          RealParameter('KMKOSTENINDEX', 0.5 ,0.9),
+    
+    # values taken from data of Dick Bakker (via outlook)
+    model.uncertainties = [RealParameter('EBIKE_BASIS', 0.22, 0.28),
+                          RealParameter('EBIKE_OW', 0.09, 0.11),
+                          RealParameter('THUISWERKREDUCTIE', 0.95, 1),
+                          RealParameter('KMKOSTENINDEX', 0.7 ,0.953),
                           RealParameter('OVKOSTENINDEX', 0.9, 1.1)]
 
     model.outcomes = [ScalarOutcome('carshare_gemeente'),
@@ -115,16 +115,16 @@ if __name__ == '__main__':
                       ScalarOutcome('totaal_gemeente')]
 
     policies = [Policy('basecase',
-                      model_file = 'Version for Thesis good.ver', output_file = 'Basecase.xlsx'),
-                    Policy('fiets',
-                           model_file='Policy fiets.ver', output_file = 'fiets.xlsx'),
-                    Policy('30 km',
-                           model_file='Policy 30 km.ver', output_file = '30 km.xlsx'),
-                    Policy('knips hoog',
-                           model_file='Policy knips hoog.ver', output_file = 'knips hoog.xlsx')
+                      model_file = 'Version for Thesis good.ver', output_file = 'Basecase.csv'),
+                Policy('fiets',
+                      model_file='Policy fiets.ver', output_file = 'fiets.csv'),
+                #Policy('30 km',
+                 #      model_file='Policy 30 km.ver', output_file = '30_km.csv'),
+                #Policy('knips hoog',
+                 #      model_file='Policy knips hoog.ver', output_file = 'knips_hoog.csv')
                     ]
 
 
-    results = perform_experiments(scenarios=1, models = model, policies = policies)
-    #with MultiprocessingEvaluator(model, n_processes=4) as evaluator:
-     #   results = evaluator.perform_experiments(4, policies=policies)
+    results = perform_experiments(scenarios=2, models = model, policies = policies)
+    #with MultiprocessingEvaluator(msis = model, n_processes=2, maxtasksperchild=2) as evaluator:
+     #   results = evaluator.perform_experiments(2, policies=policies)
