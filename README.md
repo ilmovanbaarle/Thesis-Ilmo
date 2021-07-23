@@ -19,15 +19,27 @@ pip install pypiwin32
 
 ## Usage
 
-The .py files are divided in two parts. Part one is needed to create and run scenarios. Part two is needed to create the results. The "first_try_at_connection" file shows the
+The .py files are divided in two parts. Part one is needed to create and run scenarios. Part two is needed to create the results. The "first_try_at_connection.py" file shows the
 iterative process of trouble shooting and testing with Visum commands and models.
 
 ### Creating and running scenarios
 
 The two .py files needed for this are:
 - Visum_connector.py: This file contains the connection with the Visum model, the way output is changed and the way lever are changed.
-  - VisumModel: This can be kept almost completly the same. However, if you want to change uncertainties of links/nodes/zones, the run_experiment has to change a little.
-    By changing Visum.Net.SetAttValue(k,v) to for example Visum.Net.Links.SetAttValue(k,v). More in depth tutorials of using this are found in the Visum COM manual.
+  - VisumModel: This function makes the connection with Visum possible via this line:
+    ``
+    self.Visum = win32com.client.Dispatch("Visum.Visum")
+    ``
+    This function be kept almost completly the same. However, if you want to change uncertainties of links/nodes/zones, the run_experiment has to change a little.
+    By changing
+    ``
+    Visum.Net.SetAttValue(k,v)
+    ``
+    to for example
+    ``
+    Visum.Net.Links.SetAttValue(k,v)
+    ``
+    More in depth tutorials of using this are found in the PTV Visum COM manual and some examples can be found in the "first_try_at_connection.py" file.
   - output_changer: The output changer decides how the data is extracted. In this case after every run an Excel file is written.
     This could be anything you want. You could also read something from the Visum model for example.
   - lever_changer: There is a possibility to change the level of policies. In this case, the first thing is that a line which reads the levers has to be added in the 
