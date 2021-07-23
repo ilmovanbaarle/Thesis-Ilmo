@@ -3,9 +3,9 @@ if __name__ == '__main__':
                            Model, Policy, MultiprocessingEvaluator, ArrayOutcome)
     from visum_connector import VisumModel
     ema_logging.log_to_stderr(level=ema_logging.DEBUG)
-
-    n=0
     
+    wd = "C:/Users/nlilbm/Documents/Thesis/From the server/Deze"
+
     model = VisumModel('testmodel', wd=wd, model_file='Policy base.ver',
                            n_replications=1)
     
