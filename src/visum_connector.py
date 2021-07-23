@@ -1,5 +1,6 @@
 import os
 import win32com.client
+import time
 
 from ema_workbench import ema_logging, perform_experiments
 
@@ -15,7 +16,6 @@ from ema_workbench.em_framework.parameters import (Parameter, RealParameter,
                                        CategoricalParameter)
 from ema_workbench.em_framework.util import NamedObjectMap
 from ema_workbench.em_framework.model import SingleReplication
-import time
 
 from ema_workbench.util import CaseError, EMAError, EMAWarning, get_module_logger
 from ema_workbench.util.ema_logging import method_logger
@@ -31,31 +31,26 @@ class VisumModel(SingleReplication, FileModel):
                  n_replications=1):
         super(VisumModel, self).__init__(name, wd=wd, model_file=model_file)
         self.Visum = None
-        self.model_loaded = False
         self.n_replications = n_replications
         self.output_file = output_file
         self.path_to_output_file = None
 
     @method_logger(__name__)
     def model_init(self, policy):
-        #time.sleep(10)
+        time.sleep(5)
         super(VisumModel, self).model_init(policy)
-        
-        if self.Visum is None:
-            _logger.debug("trying to start visum")
-            self.Visum = win32com.client.Dispatch("Visum.Visum")
-            
         path_to_model = os.path.join(self.working_directory, self.model_file)
         self.path_to_output_file = os.path.join(self.working_directory,
                                                 self.output_file)
 
-        if ("model_file" in policy) or (not self.model_loaded): 
-            _logger.debug(f"trying to load visum model from {path_to_model}")
-            self.Visum.LoadVersion(path_to_model)
-            _logger.debug("model loaded succesfully")
-            self.model_loaded = True
+        #debug("trying to start visum")
+        self.Visum = win32com.client.Dispatch("Visum.Visum")
 
+        #debug(f"trying to load visum model from {path_to_model}")
+        self.Visum.LoadVersion(path_to_model)
+        #debug("model loaded succesfully")
 
+        # start visum
 
     @method_logger(__name__)
     def run_experiment(self, experiment):
@@ -63,6 +58,7 @@ class VisumModel(SingleReplication, FileModel):
         for k, v in experiment.items():
             print(k,v)
             self.Visum.Net.SetAttValue(k, v)
+            
 
         # run experiment
         for i in range(self.n_replications):
@@ -81,33 +77,54 @@ class VisumModel(SingleReplication, FileModel):
 
 
 def output_changer(df):
-
-    df1 = pd.read_csv(df)
-    only_gemeente = df1[(df1.O == 1) | (df1.D == 1)]
-
-    car_km = only_gemeente[only_gemeente.VVW == 'AB'].Value.sum()
-    OV_km = only_gemeente[only_gemeente.VVW == 'OV'].Value.sum()
-    fiets_km = only_gemeente[only_gemeente.VVW == 'FTS'].Value.sum()
-    totaal_gemeente = only_gemeente.Value.sum()
-
-    carshare_gemeente = car_km/totaal_gemeente
-    OVshare_gemeente = OV_km/totaal_gemeente
-    bikeshare_gemeente = fiets_km/totaal_gemeente
     
-    output = {"carshare_gemeente":carshare_gemeente, "bikeshare_gemeente":bikeshare_gemeente,
-             "OVshare_gemeente":OVshare_gemeente,"totaal_gemeente":totaal_gemeente}
+    xls = pd.ExcelFile(df)
+    df_verpl = pd.read_excel(xls, 'SYNT_TRIPLENGTE', index_col = 0, skiprows = 12,
+                    nrows = 6, usecols = 'B:H')
+    df_km = pd.read_excel(xls, 'SYNT_TRIPLENGTE', index_col = 0, skiprows = 12,
+                    nrows = 6, usecols = 'J:P')
+
+    car_verpl = df_verpl.loc["Totaal","Autobestuurder"]
+    OV_verpl = df_verpl.loc["Totaal","Openbaar Vervoer"]
+    fiets_verpl = df_verpl.loc["Totaal","Fiets"]
+    totaal_verpl = df_verpl.loc["Totaal","Totaal"]
+
+    carshare_verpl = car_verpl/totaal_verpl
+    OVshare_verpl = OV_verpl/totaal_verpl
+    bikeshare_verpl = fiets_verpl/totaal_verpl
+    
+    car_km = df_km.loc["Totaal","Autobestuurder.1"]
+    OV_km = df_km.loc["Totaal","Openbaar Vervoer.1"]
+    fiets_km = df_km.loc["Totaal","Fiets.1"] 
+    totaal_km = df_km.loc["Totaal","Totaal.1"]
+    
+    carshare_km = car_km/totaal_km
+    OVshare_km = OV_km/totaal_km
+    bikeshare_km = fiets_km/totaal_km
+    
+    output = {"carshare_verpl":carshare_verpl, "bikeshare_verpl":bikeshare_verpl,
+             "OVshare_verpl":OVshare_verpl,"totaal_verpl":totaal_verpl,
+             'carshare_km':carshare_km, "OVshare_km":OVshare_km,
+             "bikeshare_km":bikeshare_km, "totaal_km":totaal_km}
 
     return output
+  
+def lever_changer(levers):
+    self.Visum.Net.Links.SetAllAttValues("BIKE_SPEED", BIKE_SPEED)
+    
+    for i in list(df3.index):
+        zone = Visum.Net.Zones.ItemByKey(i)
+        zone.SetAttValue("PT_KP", PT_KP)
 
     
 if __name__ == '__main__':
     from ema_workbench import (RealParameter, IntegerParameter, ScalarOutcome, Constant,
                            Model, Policy, MultiprocessingEvaluator, ArrayOutcome)
     ema_logging.log_to_stderr(level=ema_logging.DEBUG)
-    
-    wd = "./20201221 Mobilitievisie Groningen - complete/"
 
-    model = VisumModel('testmodel', wd=wd, model_file='Version for Thesis good.ver', output_file='TAB_GroVem_2040H_Iter1.csv',
+    n=0
+    
+    model = VisumModel('testmodel', wd=wd, model_file='Policy base.ver',
                            n_replications=1)
     
     # values taken from data of Dick Bakker (via outlook)
@@ -117,23 +134,26 @@ if __name__ == '__main__':
                           RealParameter('KMKOSTENINDEX', 0.7 ,0.953),
                           RealParameter('OVKOSTENINDEX', 0.9, 1.1)]
 
-    model.outcomes = [ScalarOutcome('carshare_gemeente'),
-                      ScalarOutcome('bikeshare_gemeente'),
-                      ScalarOutcome('OVshare_gemeente'),
-                      ScalarOutcome('totaal_gemeente')]
+    model.outcomes = [ScalarOutcome('carshare_verpl'),
+                      ScalarOutcome('bikeshare_verpl'),
+                      ScalarOutcome('OVshare_verpl'),
+                      ScalarOutcome('totaal_verpl'),
+                      ScalarOutcome("carshare_km"),
+                      ScalarOutcome("OVshare_km"),
+                      ScalarOutcome("bikeshare_km"),
+                      ScalarOutcome("totaal_km")
+                     ]
 
     policies = [Policy('basecase',
-                      model_file = 'Version for Thesis good.ver', output_file = 'Basecase.csv'),
+                      model_file = 'Policy base.ver', output_file = 'Grovem_TAB_GroVem_ref_1a1.xlsx'),
                 Policy('fiets',
-                      model_file='Policy fiets.ver', output_file = 'fiets.csv'),
+                      model_file='Policy fiets.ver', output_file = 'Grovem_TAB_GroVem_ref_1a1.xlsx'),
                 Policy('30 km',
-                       model_file='Policy 30 km.ver', output_file = '30_km.csv'),
-                Policy('knips hoog',
-                       model_file='Policy knips hoog.ver', output_file = 'knips_hoog.csv')
+                       model_file='Policy 30 km.ver', output_file = 'Grovem_TAB_GroVem_ref_1a1.xlsx'),
+                Policy('parkeren',
+                       model_file='Policy parkeren.ver', output_file = 'Grovem_TAB_GroVem_ref_1a1.xlsx')
                     ]
 
 
-    #results = perform_experiments(scenarios=2, models = model, policies = policies)
-    #maxtasksperchild=4
     with MultiprocessingEvaluator(model, n_processes=5) as evaluator:
-        results = evaluator.perform_experiments(4, policies=policies)
+        results = evaluator.perform_experiments(250, policies=policies,  uncertainty_sampling="lhs")
